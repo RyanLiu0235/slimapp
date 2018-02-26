@@ -15,11 +15,13 @@ function app(view, actions, state, container) {
   var handler
   for (var key in actions) {
     handler = actions[key]
-    _actions[key] = function(payload) {
-      handler(payload)(state)
+    ;(function(key, handler) {
+      _actions[key] = function(payload) {
+        handler(payload)(state)
 
-      updateView()
-    }
+        updateView()
+      }
+    })(key, handler)
   }
 
   var rootNode = view(_actions, state)

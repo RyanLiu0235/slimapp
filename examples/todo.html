@@ -27,6 +27,7 @@
             if (e.which === 13) {
               var todo = e.target.value.trim()
               if (todo) {
+                console.log(actions.add)
                 actions.add({
                   id: Date.now(),
                   text: todo
@@ -38,7 +39,14 @@
       ]),
       h('hr'),
       h('ol', {},
-        state.list.map(item => h('li', { key: item.id }, [item.text]))
+        state.list.map(item => h('li', { key: item.id }, [
+          item.text,
+          h('button', {
+            click: function() {
+              actions.del(item.id)
+            }
+          }, ['x'])
+        ]))
       )
     ])
   }
@@ -47,11 +55,17 @@
       return function(state) {
         state.list.push(payload)
       }
+    },
+    del: function(id) {
+      return function(state) {
+        var index = state.list.findIndex(item => item.key === id)
+        state.list.splice(index, 1)
+      }
     }
   }
   var state = {
     list: [{
-      id: 0,
+      id: Date.now(),
       text: 'this is a test'
     }]
   }
