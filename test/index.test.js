@@ -18,3 +18,23 @@ test('compile', function() {
 
   expect(document.body.innerHTML).toBe('<p>1</p>')
 })
+
+test('update', function() {
+  var view = function(actions, state) {
+    return h('p', {}, [state.a])
+  }
+  var actions = {
+    add: function() {
+      return function(state) {
+        state.a += 1
+      }
+    }
+  }
+  var state = {
+    a: 1
+  }
+  var vm = app(view, actions, state, document.body)
+  vm.add()
+
+  expect(document.body.innerHTML).toBe('<p>2</p>')
+})
