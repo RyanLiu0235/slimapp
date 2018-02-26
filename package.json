@@ -1,8 +1,8 @@
 {
   "name": "slimapp",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "a simple mvvm",
-  "main": "dist/slim.min.js",
+  "main": "dist/slim.js",
   "scripts": {
     "build": "./node_modules/.bin/rollup -c",
     "test": "./node_modules/.bin/jest --coverage",
@@ -13,7 +13,9 @@
     "type": "git",
     "url": "git+https://github.com/stop2stare/slimapp.git"
   },
-  "keywords": ["mvvm"],
+  "keywords": [
+    "mvvm"
+  ],
   "author": "liucheng",
   "license": "WTFPL",
   "bugs": {
@@ -35,6 +37,6 @@
     "rollup-plugin-uglify": "^3.0.0"
   },
   "dependencies": {
-    "seb-vdom": "0.0.3"
+    "seb-vdom": "^0.1.0"
   }
 }

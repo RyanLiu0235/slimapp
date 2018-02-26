@@ -1,5 +1,5 @@
 /**
- * slimapp v0.0.1
+ * slimapp v0.1.0
  * (c) 2018 Ryan Liu
  * @license WTFPL
  */
@@ -19,12 +19,450 @@ function createCommonjsModule(fn, module) {
 	return module = { exports: {} }, fn(module, module.exports), module.exports;
 }
 
-var seb_min = createCommonjsModule(function (module, exports) {
-!function(e,t){module.exports=t();}(commonjsGlobal,function(){var e=function e(t,n,r){n=n||{}, r=r||[], this.tagName=t, this.props=n, this.key=n.key, this.children=r;for(var i,o=0,a=0;a<r.length;a++)(i=r[a])instanceof e&&(o+=i.count), o++;this.count=o;};var t=function e(t){for(var n,r,i=document.createElement(t.tagName),o=t.props,a=Object.keys(o),s=0;s<a.length;s++)n=a[s], "function"==typeof(r=o[n])?i.addEventListener(n,function(e){r.call(this,e);}):i.setAttribute(n,r);for(var c,f=t.children,u=0;u<f.length;u++)if(c=f[u], ["string","number"].indexOf(typeof c)>-1){var h=document.createTextNode(c);i.appendChild(h);}else{var l=e(c);i.appendChild(l);}return i};function n(e,t){for(var n={},i=[],o=0,a=e.length;o<a;o++){var s=e[o],c=r(s,t);c?n[c]=o:i.push(s);}return{keyIndex:n,free:i}}function r(e,t){if(e&&t)return"string"==typeof t?e[t]:t(e)}var i={makeKeyIndexAndFree:n,diff:function(e,t,i){for(var o,a,s=n(e,i),c=n(t,i),f=c.free,u=s.keyIndex,h=c.keyIndex,l=[],p=[],d=0,v=0;d<e.length;){if(a=r(o=e[d],i))if(h.hasOwnProperty(a)){var y=h[a];p.push(t[y]);}else p.push(null);else{var g=f[v++];p.push(g||null);}d++;}var E=p.slice(0);for(d=0;d<E.length;)null===E[d]?(O(d), P(d)):d++;for(var m=d=0;d<t.length;){a=r(o=t[d],i);var R=E[m],k=r(R,i);R?a===k?m++:u.hasOwnProperty(a)&&r(E[m+1],i)===a?(O(d), P(m), m++):b(d,o):b(d,o), d++;}function O(e){var t={index:e,type:0};l.push(t);}function b(e,t){var n={index:e,item:t,type:1};l.push(n);}function P(e){E.splice(e,1);}return{moves:l,children:p}}}.diff,o={isString:function(e){return"string"==typeof e}},a={REPLACE:"REPLACE",REORDER:"REORDER",PROPS:"PROPS",TEXT:"TEXT"};function s(e,n){var r=n.patch;switch(n.type){case a.REPLACE:var i=o.isString(r)?r:t(r);e.parentNode.replaceChild(i,e);break;case a.REORDER:!function(e,n){for(var r,i,o,a,s=e.childNodes,c=0;c<n.length;c++)switch(r=n[c], i=r.index, o=r.item, a=s[i], r.type){case 0:e.removeChild(a);break;case 1:var f=t(o);e.insertBefore(f,a);}}(e,r.moves);break;case a.PROPS:!function(e,t){for(var n,r,i=Object.keys(t),o=0;o<i.length;o++)n=i[o], "function"==typeof(r=t[n])||(!1===r||void 0===r?e.removeAttribute(n):e.setAttribute(n,r));}(e,r);break;case a.TEXT:var s=document.createTextNode(r);e.parentNode.replaceChild(s,e);}}return{h:function(t,n,r){return new e(t,n,r)},render:t,diff:function(e,t){var n={};return function e(t,n,r,s){var c=[];if(null===n);else if(o.isString(t)&&o.isString(n))t!==n&&c.push({type:a.TEXT,patch:n});else if(t.tagName===n.tagName&&t.key===n.key){for(var f,u=t.props,h=n.props,l=Object.assign({},u,h),p=Object.keys(l),d={},v=0;v<p.length;v++)f=p[v], h[f]!==u[f]&&(d[f]=h[f]);Object.keys(d).length>0&&c.push({type:a.PROPS,patch:d});var y=t.children,g=i(y,n.children,"key"),E=g.moves,m=g.children;E.length>0&&c.push({type:a.REORDER,patch:{moves:E}});for(var R,k,O=null,b=r,P=0;P<y.length;P++)R=y[P], k=m[P], b+=O&&O.count?O.count:1, e(R,k,b,s), O=R;}else c.push({type:a.REPLACE,patch:n});c.length>0&&(s[r]=c);}(e,t,0,n), n},patch:function(e,t){!function e(t,n,r){var i=n[r];if(!o.isString(t))for(var a=t.childNodes,c=0;c<a.length;c++)e(a[c],n,++r);if(i)for(var f=0;f<i.length;f++)s(t,i[f]);}(e,t,0);}}});
+var seb = createCommonjsModule(function (module, exports) {
+/**
+ * seb-vdom v0.1.0
+ * (c) 2018 Ryan Liu
+ * @license WTFPL
+ */
+(function (global, factory) {
+	module.exports = factory();
+}(commonjsGlobal, (function () { function VNode(tagName, props, children) {
+  props = props || {};
+  children = children || [];
+  this.tagName = tagName;
+  this.props = props;
+  this.key = props.key;
+  this.children = children;
+
+  var count = 0;
+  var child;
+  for (var i = 0; i < children.length; i++) {
+    child = children[i];
+    if (child instanceof VNode) {
+      count += child.count;
+    }
+    count++;
+  }
+  this.count = count;
+}
+
+var vnode = VNode;
+
+function h(tagName, props, children) {
+  return new vnode(tagName, props, children)
+}
+
+var h_1 = h;
+
+function render(vnode) {
+  // 1. tag
+  var el = document.createElement(vnode.tagName);
+
+  // 2. add props
+  var props = vnode.props;
+  var propNames = Object.keys(props);
+  var prop, value;
+  for (var i = 0; i < propNames.length; i++) {
+    prop = propNames[i];
+    value = props[prop];
+    if (typeof value === 'function') {
+      // bind this function to el
+      // prop expects event name lick `onclick`
+      if (prop in el) {
+        el[prop] = value;
+      }
+    } else {
+      el.setAttribute(prop, value);
+    }
+  }
+
+  // 3. children
+  var children = vnode.children;
+  var child;
+  for (var j = 0; j < children.length; j++) {
+    child = children[j];
+    // if child is text
+    if (['string', 'number'].indexOf(typeof child) > -1) {
+      var textNode = document.createTextNode(child);
+      el.appendChild(textNode);
+    } else {
+      var childNode = render(child);
+      el.appendChild(childNode);
+    }
+  }
+
+  return el
+}
+
+var render_1 = render;
+
+/**
+ * Diff two list in O(N).
+ * @param {Array} oldList - Original List
+ * @param {Array} newList - List After certain insertions, removes, or moves
+ * @return {Object} - {moves: <Array>}
+ *                  - moves is a list of actions that telling how to remove and insert
+ */
+function diff (oldList, newList, key) {
+  var oldMap = makeKeyIndexAndFree(oldList, key);
+  var newMap = makeKeyIndexAndFree(newList, key);
+
+  var newFree = newMap.free;
+
+  var oldKeyIndex = oldMap.keyIndex;
+  var newKeyIndex = newMap.keyIndex;
+
+  var moves = [];
+
+  // a simulate list to manipulate
+  var children = [];
+  var i = 0;
+  var item;
+  var itemKey;
+  var freeIndex = 0;
+
+  // fist pass to check item in old list: if it's removed or not
+  while (i < oldList.length) {
+    item = oldList[i];
+    itemKey = getItemKey(item, key);
+    if (itemKey) {
+      if (!newKeyIndex.hasOwnProperty(itemKey)) {
+        children.push(null);
+      } else {
+        var newItemIndex = newKeyIndex[itemKey];
+        children.push(newList[newItemIndex]);
+      }
+    } else {
+      var freeItem = newFree[freeIndex++];
+      children.push(freeItem || null);
+    }
+    i++;
+  }
+
+  var simulateList = children.slice(0);
+
+  // remove items no longer exist
+  i = 0;
+  while (i < simulateList.length) {
+    if (simulateList[i] === null) {
+      remove(i);
+      removeSimulate(i);
+    } else {
+      i++;
+    }
+  }
+
+  // i is cursor pointing to a item in new list
+  // j is cursor pointing to a item in simulateList
+  var j = i = 0;
+  while (i < newList.length) {
+    item = newList[i];
+    itemKey = getItemKey(item, key);
+
+    var simulateItem = simulateList[j];
+    var simulateItemKey = getItemKey(simulateItem, key);
+
+    if (simulateItem) {
+      if (itemKey === simulateItemKey) {
+        j++;
+      } else {
+        // new item, just inesrt it
+        if (!oldKeyIndex.hasOwnProperty(itemKey)) {
+          insert(i, item);
+        } else {
+          // if remove current simulateItem make item in right place
+          // then just remove it
+          var nextItemKey = getItemKey(simulateList[j + 1], key);
+          if (nextItemKey === itemKey) {
+            remove(i);
+            removeSimulate(j);
+            j++; // after removing, current j is right, just jump to next one
+          } else {
+            // else insert item
+            insert(i, item);
+          }
+        }
+      }
+    } else {
+      insert(i, item);
+    }
+
+    i++;
+  }
+
+  function remove (index) {
+    var move = {index: index, type: 0};
+    moves.push(move);
+  }
+
+  function insert (index, item) {
+    var move = {index: index, item: item, type: 1};
+    moves.push(move);
+  }
+
+  function removeSimulate (index) {
+    simulateList.splice(index, 1);
+  }
+
+  return {
+    moves: moves,
+    children: children
+  }
+}
+
+/**
+ * Convert list to key-item keyIndex object.
+ * @param {Array} list
+ * @param {String|Function} key
+ */
+function makeKeyIndexAndFree (list, key) {
+  var keyIndex = {};
+  var free = [];
+  for (var i = 0, len = list.length; i < len; i++) {
+    var item = list[i];
+    var itemKey = getItemKey(item, key);
+    if (itemKey) {
+      keyIndex[itemKey] = i;
+    } else {
+      free.push(item);
+    }
+  }
+  return {
+    keyIndex: keyIndex,
+    free: free
+  }
+}
+
+function getItemKey (item, key) {
+  if (!item || !key) return void 666
+  return typeof key === 'string'
+    ? item[key]
+    : key(item)
+}
+
+var makeKeyIndexAndFree_1 = makeKeyIndexAndFree; // exports for test
+var diff_2 = diff;
+
+var diff_1 = {
+	makeKeyIndexAndFree: makeKeyIndexAndFree_1,
+	diff: diff_2
+};
+
+var listDiff2 = diff_1.diff;
+
+var isString = function(obj) {
+  return typeof obj === 'string'
+};
+
+var utils = {
+	isString: isString
+};
+
+var REPLACE = 'REPLACE';
+var REORDER = 'REORDER';
+var PROPS = 'PROPS';
+var TEXT = 'TEXT';
+
+var types = {
+	REPLACE: REPLACE,
+	REORDER: REORDER,
+	PROPS: PROPS,
+	TEXT: TEXT
+};
+
+function diff$1(oldTree, newTree) {
+  var index = 0;
+  var patches = {};
+  walk(oldTree, newTree, index, patches);
+  return patches
+}
+
+function walk(oldNode, newNode, index, patches) {
+  var _patches = [];
+
+  if (newNode === null) {
+    // 1. node has been removed
+  } else if (utils.isString(oldNode) && utils.isString(newNode)) {
+    // 2. both textNode and changed
+    if (oldNode !== newNode) {
+      _patches.push({
+        type: types.TEXT,
+        patch: newNode
+      });
+    }
+  } else if (
+    oldNode.tagName === newNode.tagName &&
+    oldNode.key === newNode.key
+  ) {
+    // element remain still, we'll check props and children
+    // 3. props have been changed
+    var oldProps = oldNode.props;
+    var newProps = newNode.props;
+    var allProps = Object.assign({}, oldProps, newProps);
+    var propsKeys = Object.keys(allProps);
+
+    var key;
+    var propsPatches = {};
+    for (var i = 0; i < propsKeys.length; i++) {
+      key = propsKeys[i];
+      if (newProps[key] !== oldProps[key]) {
+        propsPatches[key] = newProps[key];
+      }
+    }
+
+    if (Object.keys(propsPatches).length > 0) {
+      _patches.push({
+        type: types.PROPS,
+        patch: propsPatches
+      });
+    }
+
+    // 4. walk all the children
+    var oldChildren = oldNode.children;
+    var childrenPatches = listDiff2(oldChildren, newNode.children, 'key');
+    var moves = childrenPatches.moves;
+    var newChildren = childrenPatches.children;
+    if (moves.length > 0) {
+      _patches.push({
+        type: types.REORDER,
+        patch: {
+          moves: moves
+        }
+      });
+    }
+
+    var leftNode = null;
+    var _index = index;
+    var oldChild, newChild;
+    for (var j = 0; j < oldChildren.length; j++) {
+      oldChild = oldChildren[j];
+      newChild = newChildren[j];
+
+      _index += leftNode && leftNode.count ? leftNode.count : 0 + 1;
+
+      walk(oldChild, newChild, _index, patches);
+      leftNode = oldChild;
+    }
+  } else {
+    // 5. element has been totally replaced
+    _patches.push({
+      type: types.REPLACE,
+      patch: newNode
+    });
+  }
+
+  if (_patches.length > 0) {
+    patches[index] = _patches;
+  }
+}
+
+var diff_1$2 = diff$1;
+
+function patch(oldDom, patches) {
+  var count = 0;
+  walk$1(oldDom, patches, count);
+}
+
+function walk$1(oldDom, patches, count) {
+  var currentPatch = patches[count];
+
+  if (!utils.isString(oldDom)) {
+    var children = oldDom.childNodes;
+    for (var j = 0; j < children.length; j++) {
+      walk$1(children[j], patches, ++count);
+    }
+  }
+  if (currentPatch) {
+    for (var i = 0; i < currentPatch.length; i++) {
+      handlePatch(oldDom, currentPatch[i]);
+    }
+  }
+}
+
+function handlePatch(oldDom, currentPatch) {
+  var _patch = currentPatch.patch;
+
+  switch (currentPatch.type) {
+    case types.REPLACE:
+      var newDom = utils.isString(_patch) ? _patch : render_1(_patch);
+      oldDom.parentNode.replaceChild(newDom, oldDom);
+      break
+    case types.REORDER:
+      patchReorder(oldDom, _patch.moves);
+      break
+    case types.PROPS:
+      patchProps(oldDom, _patch);
+      break
+    case types.TEXT:
+      var newText = document.createTextNode(_patch);
+      oldDom.parentNode.replaceChild(newText, oldDom);
+      break
+  }
+}
+
+function patchReorder(oldDom, moves) {
+  var children = oldDom.childNodes;
+  var move, index, item, child;
+  for (var i = 0; i < moves.length; i++) {
+    move = moves[i];
+    index = move.index;
+    item = move.item;
+    child = children[index];
+
+    switch (move.type) {
+      case 0:
+        // remove
+        oldDom.removeChild(child);
+        break
+      case 1:
+        // insert
+        var newDom = render_1(item);
+        oldDom.insertBefore(newDom, child);
+        break
+    }
+  }
+}
+
+function patchProps(oldDom, _patch) {
+  var props = Object.keys(_patch);
+  var prop, value;
+  for (var i = 0; i < props.length; i++) {
+    prop = props[i];
+    value = _patch[prop];
+    if (typeof value === 'function') {
+      // can't bind function later
+    } else if (value === false || value === undefined) {
+      oldDom.removeAttribute(prop);
+    } else {
+      oldDom.setAttribute(prop, value);
+    }
+  }
+}
+
+var patch_1 = patch;
+
+var h$1 = h_1;
+var render$2 = render_1;
+var diff$2 = diff_1$2;
+var patch$1 = patch_1;
+
+var src = {
+	h: h$1,
+	render: render$2,
+	diff: diff$2,
+	patch: patch$1
+};
+
+var vdom = src;
+
+return vdom;
+
+})));
 });
 
-var h = seb_min.h;
-var render = seb_min.render;
+var h = seb.h;
+var render = seb.render;
 
 /**
  * app
