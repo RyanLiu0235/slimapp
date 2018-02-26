@@ -10,7 +10,7 @@ var banner =
  */`
 
 export default [{
-  input: './src/index.js',
+  input: './index.js',
   output: {
     file: './dist/slim.js',
     format: 'umd',
@@ -20,7 +20,7 @@ export default [{
   },
   plugins: [cjs(), resolve()]
 }, {
-  input: './src/index.js',
+  input: './index.js',
   output: {
     file: './dist/slim.min.js',
     format: 'umd',

@@ -5,10 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "./node_modules/.bin/rollup -c",
-    "dev": "./node_modules/.bin/rollup -c -w",
     "test": "./node_modules/.bin/jest --coverage",
     "lint": "./node_modules/.bin/eslint src --fix",
-    "coverage": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha -- -R spec",
     "codecov": "node ./codecov.js"
   },
   "repository": {
