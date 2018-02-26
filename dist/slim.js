@@ -35,30 +35,38 @@ var render = seb_min.render;
  * @param  {HTMLElement} container
  */
 function app(view, actions, state, container) {
-  var _actions = {};
-  var handler;
-  for (var key in actions) {
-    handler = actions[key];
-    _actions[key] = function(payload) {
-      handler(payload)(state);
-
-      updateView();
-    };
-  }
-
-  var rootNode = view(_actions, state);
+  var wiredActions = wireStateToActions(actions, state);
+  var rootNode = view(wiredActions, state);
   var rootEl = render(rootNode);
   container.appendChild(rootEl);
 
+  return wiredActions
+
+  function wireStateToActions(actions, state) {
+    var _actions = {};
+    var handler;
+    for (var key in actions) {
+      handler = actions[key]
+      ;(function(key, handler) {
+        _actions[key] = function(payload) {
+          handler(payload)(state);
+
+          updateView();
+        };
+      })(key, handler);
+    }
+
+    return _actions
+  }
+
   function updateView() {
     var oldEl = rootEl;
-    rootNode = view(_actions, state);
+    rootNode = view(wiredActions, state);
     rootEl = render(rootNode);
 
     container.removeChild(oldEl);
     container.appendChild(rootEl);
   }
-  return _actions
 }
 
 var app_1 = app;
