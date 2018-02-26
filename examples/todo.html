@@ -23,7 +23,7 @@
           id: 'input',
           type: 'text',
           placeholder: 'todo',
-          keyup: function(e) {
+          onkeyup: function(e) {
             if (e.which === 13) {
               var todo = e.target.value.trim()
               if (todo) {
@@ -41,7 +41,7 @@
         state.list.map(item => h('li', { key: item.id }, [
           item.text,
           h('button', {
-            click: function() {
+            onclick: function() {
               actions.del(item.id)
             }
           }, ['x'])
