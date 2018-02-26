@@ -7,12 +7,13 @@ var patch = seb.patch
 /**
  * app
  *
- * @param  {VNode} 	tree
+ * @param  {Function} view
  * @param  {Object} actions
  * @param  {Object} state
  * @param  {HTMLElement} container
  */
-function app(tree, actions, state, container) {
+function app(view, actions, state, container) {
+  var tree = view(actions, state)
   var dom = render(tree)
   container.appendChild(dom)
 }

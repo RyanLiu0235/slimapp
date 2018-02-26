@@ -14,13 +14,49 @@
   var app = slim.app
 
   var container = document.getElementById('app')
-  var tree = h('ul', {}, [
-    h('li', {}, ['this is a test']),
-    h('li', {}, ['this is a test']),
-    h('li', {}, ['this is a test'])
-  ])
+  var view = function(actions, state) {
+    return h('div', {}, [
+      h('h1', {}, ['todo']),
+      h('p', {}, ['add todo:']),
+      h('div', {}, [
+        h('input', {
+          id: 'input',
+          type: 'text',
+          placeholder: 'todo',
+          keyup: function(e) {
+            if (e.which === 13) {
+              var todo = e.target.value.trim()
+              if (todo) {
+                actions.add(state, {
+                  id: Date.now(),
+                  text: todo
+                })
+              }
+            }
+          }
+        })
+      ]),
+      h('hr'),
+      h('ol', {},
+        state.list.map(item => h('li', { key: item.id }, [item.text]))
+      )
+    ])
+  }
+  var actions = {
+    add: function(payload) {
+      return function(state) {
+        state.list.push(payload)
+      }
+    }
+  }
+  var state = {
+    list: [{
+      id: 0,
+      text: 'this is a test'
+    }]
+  }
 
-  app(tree, {}, {}, container)
+  app(view, actions, state, container)
 
   </script>
 </body>
