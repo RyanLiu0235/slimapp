@@ -1,6 +1,9 @@
+function getType(test) {
+  return typeof test
+}
+
 function isString(obj) {
-  // bug of seb in VNode constructor
-  return typeof obj === 'string' || typeof obj === 'number'
+  return getType(obj) === 'string'
 }
 
 function isUndefined(test) {
@@ -28,6 +31,8 @@ function VNode(tagName, props, children) {
     child = children[i]
     if (child instanceof VNode) {
       count += child.count
+    } else {
+      children[i] = '' + child
     }
     count++
   }
@@ -69,7 +74,7 @@ function app(view, actions, state, container) {
         prop = propNames[i]
         value = props[prop]
         if (prop === 'key') continue
-        if (typeof value === 'function') {
+        if (getType(value) === 'function') {
           // bind this function to el
           // prop expects event name lick `onclick`
           if (prop in el) {
@@ -86,7 +91,7 @@ function app(view, actions, state, container) {
       for (var j = 0; j < children.length; j++) {
         child = children[j]
         // if child is text
-        if (['string', 'number'].indexOf(typeof child) > -1) {
+        if (['string', 'number'].indexOf(getType(child)) > -1) {
           var textNode = document.createTextNode(child)
           el.appendChild(textNode)
         } else {
@@ -230,7 +235,7 @@ function app(view, actions, state, container) {
       for (var j = 0; j < props.length; j++) {
         prop = props[j]
         value = propsPatches[prop]
-        if (typeof value === 'function') {
+        if (getType(value) === 'function') {
           el[prop] = value
         } else if (value === false || isUndefined(value)) {
           el.removeAttribute(prop)
