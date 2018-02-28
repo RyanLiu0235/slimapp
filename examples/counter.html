@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>slimapp-counter</title>
+  <script src="../dist/slim.js"></script>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="text/javascript">
+  var h = slim.h
+  var app = slim.app
+
+  var container = document.getElementById('app')
+  var state = {
+    a: 4
+  }
+  var view = function(actions, state) {
+    return h('div', {}, [
+      h('button', {
+        onclick: function() {
+          actions.add()
+        }
+      }, ['+']),
+      h('span', {}, [state.a]),
+      h('button', {
+        onclick: function() {
+          actions.minus()
+        }
+      }, ['-'])
+    ])
+  }
+  var actions = {
+    add: function() {
+      return function(state) {
+        state.a += 1
+      }
+    },
+    minus: function() {
+      return function(state) {
+        state.a -= 1
+      }
+    }
+  }
+
+  app(view, actions, state, container)
+
+  </script>
+</body>
+
+</html>
