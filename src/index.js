@@ -81,6 +81,18 @@ function app(view, actions, state, container) {
     }
   }
 
+  function removeElement(parent, childDom, childVNode) {
+    var onremove = childVNode.props.onremove
+    var ondestroy = childVNode.props.ondestroy
+    if (_.getType(onremove) === 'function') {
+      onremove(childDom)
+    }
+    parent.removeChild(childDom)
+    if (_.getType(ondestroy) === 'function') {
+      ondestroy(childDom)
+    }
+  }
+
   function wireStateToActions(actions, state) {
     var _actions = {}
     var handler
@@ -133,7 +145,7 @@ function app(view, actions, state, container) {
       // go through newChildren
       var i = 0 // cursor for newNode
       var j = 0 // cursor for oldNode
-      var oldKeyCache = {}
+      var oldKeyCache = []
       var oldChild, newChild, oldKey, newKey
 
       // go through newChildren
@@ -157,9 +169,11 @@ function app(view, actions, state, container) {
           }
           i++
         } else {
-          if (oldKeyCache[newKey]) {
+          var index = oldKeyCache.indexOf(newKey)
+          if (index > -1) {
             // if this VNode has been stored before, apply it
-            oldEl.insertBefore(createElement(oldKeyCache[newKey]), createElement(oldChild))
+            oldEl.insertBefore(createElement(oldChildrenMap[newKey][0]), createElement(oldChild))
+            oldKeyCache.splice(index, 1)
             i++
           } else if (oldKey === newKey) {
             // if VNode has not changed, patch directly
@@ -179,13 +193,20 @@ function app(view, actions, state, container) {
                 j++
                 break
               } else {
-                oldKeyCache[oldKey] = oldChild
+                oldKeyCache.push(oldKey)
                 oldChildren.splice(j, 1)
-                oldEl.removeChild(oldChildrenMap[oldKey][0])
               }
             }
           }
         }
+      }
+
+      // remove all the els that have not been reused
+      var m = 0
+      while (m < oldKeyCache.length) {
+        var child = oldChildrenMap[oldKeyCache[m]]
+        removeElement(oldEl, child[0], child[1])
+        m++
       }
     }
 

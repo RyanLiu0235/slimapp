@@ -126,13 +126,19 @@ test('attrs update', () => {
 test('life cycle', () => {
   var create = jest.fn()
   var update = jest.fn()
+  var remove = jest.fn()
+  var destroy = jest.fn()
 
   var view = function(actions, state) {
     return h('ol', {
       'data-num': state.list.length,
       oncreate: create,
       onupdate: update
-    }, state.list.map(item => h('li', { key: item.key }, [item.text])))
+    }, state.list.map(item => h('li', {
+      key: item.key,
+      onremove: remove,
+      ondestroy: destroy
+    }, [item.text])))
   }
   var actions = {
     add: function(payload) {
@@ -164,4 +170,8 @@ test('life cycle', () => {
     text: '3'
   })
   expect(update).toHaveBeenCalledTimes(1)
+
+  vm.del(1)
+  expect(remove).toHaveBeenCalledTimes(1)
+  expect(destroy).toHaveBeenCalledTimes(1)
 })

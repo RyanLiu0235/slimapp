@@ -50,7 +50,15 @@
             }
           }
         },
-        state.list.map(item => h('li', { key: item.id }, [
+        state.list.map(item => h('li', {
+          key: item.id,
+          onremove: function() {
+            console.log('li:', item.id, ' is gonna be removed!')
+          },
+          ondestroy: function() {
+            console.log('li:', item.id, ' has already been removed!')
+          }
+        }, [
           item.text,
           h('button', {
             onclick: function() {
