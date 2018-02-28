@@ -6,7 +6,7 @@ beforeEach(function() {
   document.body.innerHTML = ''
 })
 
-test('compile and render with text node', function() {
+test('compile and render with text node', () => {
   var view = function(actions, state) {
     return 'test'
   }
@@ -17,7 +17,7 @@ test('compile and render with text node', function() {
   expect(document.body.innerHTML).toBe('test')
 })
 
-test('compile and render', function() {
+test('compile and render', () => {
   var view = function(actions, state) {
     return h('p', {}, [state.a])
   }
@@ -30,12 +30,10 @@ test('compile and render', function() {
   expect(document.body.innerHTML).toBe('<p>1</p>')
 })
 
-test('update', function() {
+test('update', () => {
   var view = function(actions, state) {
     return h('p', {
-      onclick: function() {
-        console.log('clicked!')
-      }
+      onclick: function() {}
     }, [state.a])
   }
   var actions = {
@@ -54,7 +52,7 @@ test('update', function() {
   expect(document.body.innerHTML).toBe('<p>2</p>')
 })
 
-test('children reorder', function() {
+test('children reorder', () => {
   var view = function(actions, state) {
     return h('ol', {}, state.list.map(item => h('li', { key: item.key }, [item.text])))
   }
@@ -95,7 +93,7 @@ test('children reorder', function() {
   )
 })
 
-test('attrs update', function() {
+test('attrs update', () => {
   var view = function(actions, state) {
     return h('p', {
       name: state.name,
@@ -123,4 +121,47 @@ test('attrs update', function() {
   vm.reclass()
 
   expect(document.body.innerHTML).toBe('<p name="test-again">test</p>')
+})
+
+test('life cycle', () => {
+  var create = jest.fn()
+  var update = jest.fn()
+
+  var view = function(actions, state) {
+    return h('ol', {
+      'data-num': state.list.length,
+      oncreate: create,
+      onupdate: update
+    }, state.list.map(item => h('li', { key: item.key }, [item.text])))
+  }
+  var actions = {
+    add: function(payload) {
+      return function(state) {
+        state.list.push(payload)
+      }
+    },
+    del: function(key) {
+      return function(state) {
+        var index = state.list.findIndex(item => item.key === key)
+        state.list.splice(index, 1)
+      }
+    }
+  }
+  var state = {
+    list: [{
+      key: 1,
+      text: '1'
+    }, {
+      key: 2,
+      text: '2'
+    }]
+  }
+  var vm = app(view, actions, state, document.body)
+  expect(create).toHaveBeenCalledTimes(1)
+
+  vm.add({
+    key: 3,
+    text: '3'
+  })
+  expect(update).toHaveBeenCalledTimes(1)
 })

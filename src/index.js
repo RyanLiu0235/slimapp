@@ -11,13 +11,28 @@ var h = require('./h')
  */
 function app(view, actions, state, container) {
   var wiredActions = wireStateToActions(actions, state)
-  var rootNode = view(wiredActions, state)
+  var rootNode = null
   var rootEl = (container && container.childNodes[0]) || null
-  rootEl = diffAndPatch(container, rootEl, null, rootNode)
+
+  // after we have updated all the DOM according to the diff results
+  // pop all the hooks and invoke them
+  var isFisrtRender = true
+  var lifeCycleStack = []
+  render()
 
   return wiredActions
 
-  function render(vnode) {
+  function render() {
+    rootEl = diffAndPatch(container, rootEl, rootNode, rootNode = view(wiredActions, state))
+    isFisrtRender = false
+
+    var _hook
+    while (_hook = lifeCycleStack.pop()) {
+      _hook()
+    }
+  }
+
+  function createElement(vnode) {
     if (_.isString(vnode)) {
       return document.createTextNode(vnode)
     } else {
@@ -32,7 +47,11 @@ function app(view, actions, state, container) {
         prop = propNames[i]
         value = props[prop]
         if (prop === 'key') continue
-        if (_.getType(value) === 'function') {
+        if (prop === 'oncreate') {
+          lifeCycleStack.push((function(handler) {
+            handler(el)
+          })(value))
+        } else if (_.getType(value) === 'function') {
           // bind this function to el
           // prop expects event name lick `onclick`
           if (prop in el) {
@@ -53,7 +72,7 @@ function app(view, actions, state, container) {
           var textNode = document.createTextNode(child)
           el.appendChild(textNode)
         } else {
-          var childNode = render(child)
+          var childNode = createElement(child)
           el.appendChild(childNode)
         }
       }
@@ -70,7 +89,7 @@ function app(view, actions, state, container) {
       (function(key, handler) {
         _actions[key] = function(payload) {
           handler(payload)(state)
-          diffAndPatch(container, rootEl, rootNode, rootNode = view(wiredActions, state))
+          render()
         }
       })(key, handler)
     }
@@ -81,7 +100,7 @@ function app(view, actions, state, container) {
   function diffAndPatch(parent, oldEl, oldNode, newNode) {
     if (oldNode === null) {
       // 1. brand new node
-      oldEl = parent.appendChild(render(newNode))
+      oldEl = parent.appendChild(createElement(newNode))
     } else if (
       _.isString(oldNode) && _.isString(newNode) &&
       oldNode !== newNode
@@ -123,7 +142,7 @@ function app(view, actions, state, container) {
         oldChild = oldChildren[j]
 
         if (_.isUndefined(oldChild)) {
-          oldEl.insertBefore(render(newChild), null)
+          oldEl.insertBefore(createElement(newChild), null)
           i++
           continue
         }
@@ -140,7 +159,7 @@ function app(view, actions, state, container) {
         } else {
           if (oldKeyCache[newKey]) {
             // if this VNode has been stored before, apply it
-            oldEl.insertBefore(render(oldKeyCache[newKey]), render(oldChild))
+            oldEl.insertBefore(createElement(oldKeyCache[newKey]), createElement(oldChild))
             i++
           } else if (oldKey === newKey) {
             // if VNode has not changed, patch directly
@@ -201,6 +220,13 @@ function app(view, actions, state, container) {
           el.setAttribute(prop, value)
         }
       }
+    }
+
+    var cb = isFisrtRender ? newProps.oncreate : newProps.onupdate
+    if (cb) {
+      lifeCycleStack.push(function() {
+        cb(el, oldProps)
+      })
     }
   }
 }

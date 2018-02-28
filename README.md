@@ -35,8 +35,8 @@ var view = function(actions, state) {
   return h('p', {}, [state.a])
 }
 var actions = {
-	add: data => state => state.a += data,
-	minus: data => state => state.a -= data
+	add: data => state => { state.a += data },
+	minus: data => state => { state.a -= data }
 }
 var state = {
   a: 1
