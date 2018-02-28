@@ -36,7 +36,5 @@
     "rollup-plugin-node-resolve": "^3.0.3",
     "rollup-plugin-uglify": "^3.0.0"
   },
-  "dependencies": {
-    "seb-vdom": "^0.1.0"
-  }
+  "dependencies": {}
 }

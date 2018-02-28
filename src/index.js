@@ -1,9 +1,41 @@
-var seb = require('seb-vdom')
-var h = seb.h
-
 function isString(obj) {
   // bug of seb in VNode constructor
   return typeof obj === 'string' || typeof obj === 'number'
+}
+
+function isUndefined(test) {
+  return test === undefined
+}
+
+/**
+ * VNode constructor
+ *
+ * @param {String} tagName
+ * @param {Object} props
+ * @param {Array} children
+ */
+function VNode(tagName, props, children) {
+  props = props || {}
+  children = children || []
+  this.tagName = tagName
+  this.props = props
+  this.key = props.key
+  this.children = children
+
+  var count = 0
+  var child
+  for (var i = 0; i < children.length; i++) {
+    child = children[i]
+    if (child instanceof VNode) {
+      count += child.count
+    }
+    count++
+  }
+  this.count = count
+}
+
+function h(tagName, props, children) {
+  return new VNode(tagName, props, children)
 }
 
 /**
@@ -111,7 +143,7 @@ function app(view, actions, state, container) {
       var key
       for (var m = 0; m < oldChildren.length; m++) {
         key = oldChildren[m].key
-        if (key !== undefined) {
+        if (!isUndefined(key)) {
           oldChildrenMap[key] = [oldEl.childNodes[m], oldChildren[m]]
         }
       }
@@ -127,7 +159,7 @@ function app(view, actions, state, container) {
         newChild = newChildren[i]
         oldChild = oldChildren[j]
 
-        if (oldChild === undefined) {
+        if (isUndefined(oldChild)) {
           oldEl.insertBefore(render(newChild), null)
           i++
           continue
@@ -136,8 +168,8 @@ function app(view, actions, state, container) {
         newKey = newChild.key
         oldKey = oldChild.key
 
-        if (newKey === undefined) {
-          if (oldKey === undefined) {
+        if (isUndefined(newKey)) {
+          if (isUndefined(oldKey)) {
             diffAndPatch(oldEl, oldEl.childNodes[i], oldChild, newChild)
             j++
           }
@@ -200,7 +232,7 @@ function app(view, actions, state, container) {
         value = propsPatches[prop]
         if (typeof value === 'function') {
           el[prop] = value
-        } else if (value === false || value === undefined) {
+        } else if (value === false || isUndefined(value)) {
           el.removeAttribute(prop)
         } else {
           el.setAttribute(prop, value)
