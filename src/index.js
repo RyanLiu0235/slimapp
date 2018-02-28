@@ -1,47 +1,5 @@
-function getType(test) {
-  return typeof test
-}
-
-function isString(obj) {
-  return getType(obj) === 'string'
-}
-
-function isUndefined(test) {
-  return test === undefined
-}
-
-/**
- * VNode constructor
- *
- * @param {String} tagName
- * @param {Object} props
- * @param {Array} children
- */
-function VNode(tagName, props, children) {
-  props = props || {}
-  children = children || []
-  this.tagName = tagName
-  this.props = props
-  this.key = props.key
-  this.children = children
-
-  var count = 0
-  var child
-  for (var i = 0; i < children.length; i++) {
-    child = children[i]
-    if (child instanceof VNode) {
-      count += child.count
-    } else {
-      children[i] = '' + child
-    }
-    count++
-  }
-  this.count = count
-}
-
-function h(tagName, props, children) {
-  return new VNode(tagName, props, children)
-}
+var _ = require('./utils')
+var h = require('./h')
 
 /**
  * app
@@ -60,7 +18,7 @@ function app(view, actions, state, container) {
   return wiredActions
 
   function render(vnode) {
-    if (isString(vnode)) {
+    if (_.isString(vnode)) {
       return document.createTextNode(vnode)
     } else {
       // 1. tag
@@ -74,7 +32,7 @@ function app(view, actions, state, container) {
         prop = propNames[i]
         value = props[prop]
         if (prop === 'key') continue
-        if (getType(value) === 'function') {
+        if (_.getType(value) === 'function') {
           // bind this function to el
           // prop expects event name lick `onclick`
           if (prop in el) {
@@ -91,7 +49,7 @@ function app(view, actions, state, container) {
       for (var j = 0; j < children.length; j++) {
         child = children[j]
         // if child is text
-        if (['string', 'number'].indexOf(getType(child)) > -1) {
+        if (['string', 'number'].indexOf(_.getType(child)) > -1) {
           var textNode = document.createTextNode(child)
           el.appendChild(textNode)
         } else {
@@ -108,8 +66,8 @@ function app(view, actions, state, container) {
     var _actions = {}
     var handler
     for (var key in actions) {
-      handler = actions[key]
-      ;(function(key, handler) {
+      handler = actions[key];
+      (function(key, handler) {
         _actions[key] = function(payload) {
           handler(payload)(state)
           diffAndPatch(container, rootEl, rootNode, rootNode = view(wiredActions, state))
@@ -125,7 +83,7 @@ function app(view, actions, state, container) {
       // 1. brand new node
       oldEl = parent.appendChild(render(newNode))
     } else if (
-      isString(oldNode) && isString(newNode) &&
+      _.isString(oldNode) && _.isString(newNode) &&
       oldNode !== newNode
     ) {
       // 2. both text node and changed
@@ -148,7 +106,7 @@ function app(view, actions, state, container) {
       var key
       for (var m = 0; m < oldChildren.length; m++) {
         key = oldChildren[m].key
-        if (!isUndefined(key)) {
+        if (!_.isUndefined(key)) {
           oldChildrenMap[key] = [oldEl.childNodes[m], oldChildren[m]]
         }
       }
@@ -164,7 +122,7 @@ function app(view, actions, state, container) {
         newChild = newChildren[i]
         oldChild = oldChildren[j]
 
-        if (isUndefined(oldChild)) {
+        if (_.isUndefined(oldChild)) {
           oldEl.insertBefore(render(newChild), null)
           i++
           continue
@@ -173,8 +131,8 @@ function app(view, actions, state, container) {
         newKey = newChild.key
         oldKey = oldChild.key
 
-        if (isUndefined(newKey)) {
-          if (isUndefined(oldKey)) {
+        if (_.isUndefined(newKey)) {
+          if (_.isUndefined(oldKey)) {
             diffAndPatch(oldEl, oldEl.childNodes[i], oldChild, newChild)
             j++
           }
@@ -235,9 +193,9 @@ function app(view, actions, state, container) {
       for (var j = 0; j < props.length; j++) {
         prop = props[j]
         value = propsPatches[prop]
-        if (getType(value) === 'function') {
+        if (_.getType(value) === 'function') {
           el[prop] = value
-        } else if (value === false || isUndefined(value)) {
+        } else if (value === false || _.isUndefined(value)) {
           el.removeAttribute(prop)
         } else {
           el.setAttribute(prop, value)
