@@ -4,8 +4,47 @@ Simplest MVVM
 
 ## Background
 
-A practice of [hyperapp](https://github.com/hyperapp/hyperapp), but not sure how far will it go.
+A practice of [hyperapp](https://github.com/hyperapp/hyperapp)
 
 ## Usage
 
-checkout the [examples/todo.html](https://github.com/stop2stare/slimapp/blob/master/examples/todo.html)
+Checkout the [examples](https://github.com/stop2stare/slimapp/blob/master/examples)
+
+Slimapp provides two functions: `h` and `app`.
+
+### `h`
+
+`h` helps you to build your vdom
+
+``` js
+var vdom = h('span', {class: 'test'}, ['text'])
+// vdom: {
+// 	tagName: 'span',
+// 	key: undefined,
+// 	props: {class: 'test'},
+// 	children: ['text']
+// }
+```
+
+### `app`
+
+`app` helps you to start your app
+
+``` js
+var view = function(actions, state) {
+  return h('p', {}, [state.a])
+}
+var actions = {
+	add: data => state => state.a += data,
+	minus: data => state => state.a -= data
+}
+var state = {
+  a: 1
+}
+var vm = app(view, actions, state, document.body)
+
+console.log(document.body.innerHTML) // '<p>1</p>'
+
+vm.add(1) // '<p>2</p>'
+vm.minus(3) // '<p>-1</p>'
+```
