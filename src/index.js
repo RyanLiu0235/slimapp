@@ -147,8 +147,6 @@ function app(view, actions, state, container) {
       var j = 0 // cursor for oldNode
       var oldKeyCache = []
       var oldChild, newChild, oldKey, newKey
-
-      // go through newChildren
       while (i < newChildren.length) {
         newChild = newChildren[i]
         oldChild = oldChildren[j]
@@ -208,6 +206,12 @@ function app(view, actions, state, container) {
         removeElement(oldEl, child[0], child[1])
         m++
       }
+    } else {
+      // 3. remove old el, create new one
+      var newEl = createElement(newNode)
+      parent.insertBefore(newEl, oldEl)
+      parent.removeChild(oldEl)
+      oldEl = newEl
     }
 
     return oldEl

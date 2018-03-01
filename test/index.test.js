@@ -52,6 +52,26 @@ test('update', () => {
   expect(document.body.innerHTML).toBe('<p>2</p>')
 })
 
+test('unkeyed elements', () => {
+  var view = function(actions, state) {
+    return h('div', {}, state.els.map(el => h(el, {}, ['1'])))
+  }
+  var actions = {
+    test: els => state => { state.els = els }
+  }
+  var state = {
+    els: ['div']
+  }
+  var vm = app(view, actions, state, document.body)
+  expect(document.body.innerHTML).toBe('<div><div>1</div></div>')
+
+  vm.test(['div', 'p'])
+  expect(document.body.innerHTML).toBe('<div><div>1</div><p>1</p></div>')
+
+  vm.test(['div', 'span', 'p'])
+  expect(document.body.innerHTML).toBe('<div><div>1</div><span>1</span><p>1</p></div>')
+})
+
 test('children reorder', () => {
   var view = function(actions, state) {
     return h('ol', {}, state.list.map(item => h('li', { key: item.key }, [item.text])))

@@ -19,10 +19,10 @@ Slimapp provides two functions: `h` and `app`.
 ``` js
 var vdom = h('span', {class: 'test'}, ['text'])
 // vdom: {
-// 	tagName: 'span',
-// 	key: undefined,
-// 	props: {class: 'test'},
-// 	children: ['text']
+//  tagName: 'span',
+//  key: undefined,
+//  props: {class: 'test'},
+//  children: ['text']
 // }
 ```
 
@@ -35,8 +35,8 @@ var view = function(actions, state) {
   return h('p', {}, [state.a])
 }
 var actions = {
-	add: data => state => { state.a += data },
-	minus: data => state => { state.a -= data }
+  add: data => state => { state.a += data },
+  minus: data => state => { state.a -= data }
 }
 var state = {
   a: 1
