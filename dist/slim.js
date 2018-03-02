@@ -1,5 +1,5 @@
 /**
- * slimapp v0.1.1
+ * slimapp v0.1.2
  * (c) 2018 Ryan Liu
  * @license WTFPL
  */
@@ -9,17 +9,27 @@
 	(global.slim = factory());
 }(this, (function () { 'use strict';
 
-function getType(test) {
+function createCommonjsModule(fn, module) {
+	return module = { exports: {} }, fn(module, module.exports), module.exports;
+}
+
+var utils = createCommonjsModule(function (module, exports) {
+exports.getType = function(test) {
   return typeof test
-}
+};
 
-function isString(obj) {
-  return getType(obj) === 'string'
-}
+exports.isString = function(test) {
+  return exports.getType(test) === 'string'
+};
 
-function isUndefined(test) {
+exports.isUndefined = function(test) {
   return test === undefined
-}
+};
+});
+
+var utils_1 = utils.getType;
+var utils_2 = utils.isString;
+var utils_3 = utils.isUndefined;
 
 /**
  * VNode constructor
@@ -50,9 +60,13 @@ function VNode(tagName, props, children) {
   this.count = count;
 }
 
+var vnode = VNode;
+
 function h(tagName, props, children) {
-  return new VNode(tagName, props, children)
+  return new vnode(tagName, props, children)
 }
+
+var h_1 = h;
 
 /**
  * app
@@ -64,14 +78,29 @@ function h(tagName, props, children) {
  */
 function app(view, actions, state, container) {
   var wiredActions = wireStateToActions(actions, state);
-  var rootNode = view(wiredActions, state);
+  var rootNode = null;
   var rootEl = (container && container.childNodes[0]) || null;
-  rootEl = diffAndPatch(container, rootEl, null, rootNode);
+
+  // after we have updated all the DOM according to the diff results
+  // pop all the hooks and invoke them
+  var isFisrtRender = true;
+  var lifeCycleStack = [];
+  render();
 
   return wiredActions
 
-  function render(vnode) {
-    if (isString(vnode)) {
+  function render() {
+    rootEl = diffAndPatch(container, rootEl, rootNode, rootNode = view(wiredActions, state));
+    isFisrtRender = false;
+
+    var _hook;
+    while (_hook = lifeCycleStack.pop()) {
+      _hook();
+    }
+  }
+
+  function createElement(vnode) {
+    if (utils.isString(vnode)) {
       return document.createTextNode(vnode)
     } else {
       // 1. tag
@@ -85,7 +114,11 @@ function app(view, actions, state, container) {
         prop = propNames[i];
         value = props[prop];
         if (prop === 'key') continue
-        if (getType(value) === 'function') {
+        if (prop === 'oncreate') {
+          lifeCycleStack.push((function(handler) {
+            handler(el);
+          })(value));
+        } else if (utils.getType(value) === 'function') {
           // bind this function to el
           // prop expects event name lick `onclick`
           if (prop in el) {
@@ -102,11 +135,11 @@ function app(view, actions, state, container) {
       for (var j = 0; j < children.length; j++) {
         child = children[j];
         // if child is text
-        if (['string', 'number'].indexOf(getType(child)) > -1) {
+        if (['string', 'number'].indexOf(utils.getType(child)) > -1) {
           var textNode = document.createTextNode(child);
           el.appendChild(textNode);
         } else {
-          var childNode = render(child);
+          var childNode = createElement(child);
           el.appendChild(childNode);
         }
       }
@@ -115,15 +148,27 @@ function app(view, actions, state, container) {
     }
   }
 
+  function removeElement(parent, childDom, childVNode) {
+    var onremove = childVNode.props.onremove;
+    var ondestroy = childVNode.props.ondestroy;
+    if (utils.getType(onremove) === 'function') {
+      onremove(childDom);
+    }
+    parent.removeChild(childDom);
+    if (utils.getType(ondestroy) === 'function') {
+      ondestroy(childDom);
+    }
+  }
+
   function wireStateToActions(actions, state) {
     var _actions = {};
     var handler;
     for (var key in actions) {
-      handler = actions[key]
-      ;(function(key, handler) {
+      handler = actions[key];
+      (function(key, handler) {
         _actions[key] = function(payload) {
           handler(payload)(state);
-          diffAndPatch(container, rootEl, rootNode, rootNode = view(wiredActions, state));
+          render();
         };
       })(key, handler);
     }
@@ -134,93 +179,90 @@ function app(view, actions, state, container) {
   function diffAndPatch(parent, oldEl, oldNode, newNode) {
     if (oldNode === null) {
       // 1. brand new node
-      oldEl = parent.appendChild(render(newNode));
-    } else if (
-      isString(oldNode) && isString(newNode) &&
-      oldNode !== newNode
-    ) {
+      oldEl = parent.insertBefore(createElement(newNode), oldEl);
+    } else if (utils.isString(oldNode) && utils.isString(newNode)) {
       // 2. both text node and changed
-      parent.textContent = newNode;
+      if (oldNode !== newNode) {
+        parent.textContent = newNode;
+      }
     } else if (
       oldNode.tagName &&
-      oldNode.tagName === newNode.tagName &&
-      oldNode.key === newNode.key
+      oldNode.tagName === newNode.tagName
     ) {
       // 3. tag remains still, we'll check if attrs and children have been changed
-      // check attrs
+      // 3.1. check attrs
       updateAttrs(oldEl, oldNode.props, newNode.props);
 
-      // check children
+      // 3.2. check children
       var oldChildren = oldNode.children;
       var newChildren = newNode.children;
 
-      // store all the old keys
-      var oldChildrenMap = [];
-      var key;
+      var oldElements = [];
+      var oldKeyMap = {};
+      var newKeyed = [];
       for (var m = 0; m < oldChildren.length; m++) {
-        key = oldChildren[m].key;
-        if (!isUndefined(key)) {
-          oldChildrenMap[key] = [oldEl.childNodes[m], oldChildren[m]];
+        oldElements.push(oldEl.childNodes[m]);
+        var key = oldChildren[m].key;
+        if (!utils.isUndefined(key)) {
+          oldKeyMap[key] = [oldChildren[m], oldEl.childNodes[m]];
         }
       }
 
-      // go through newChildren
-      var i = 0; // cursor for newNode
-      var j = 0; // cursor for oldNode
-      var oldKeyCache = {};
-      var oldChild, newChild, oldKey, newKey;
-
-      // go through newChildren
+      var i = 0; // i is the cursor when iterate newChildren
+      var j = 0; // j is the cursor when iterate oldChildren
       while (i < newChildren.length) {
-        newChild = newChildren[i];
-        oldChild = oldChildren[j];
+        var oldChild = oldChildren[j];
+        var newChild = newChildren[i];
 
-        if (isUndefined(oldChild)) {
-          oldEl.insertBefore(render(newChild), null);
+        if (utils.isUndefined(oldChild)) {
+          diffAndPatch(oldEl, null, null, newChild);
           i++;
           continue
         }
 
-        newKey = newChild.key;
-        oldKey = oldChild.key;
+        var oldKey = oldChild.key;
+        var newKey = newChild.key;
 
-        if (isUndefined(newKey)) {
-          if (isUndefined(oldKey)) {
-            diffAndPatch(oldEl, oldEl.childNodes[i], oldChild, newChild);
+        if (utils.isUndefined(oldKey)) {
+          if (utils.isUndefined(newKey)) {
+            diffAndPatch(oldEl, oldEl.childNodes[j], oldChild, newChild);
+            i++;
+          }
+          j++;
+        } else {
+          if (oldKey === newKey) {
+            diffAndPatch(oldEl, oldEl.childNodes[j], oldChild, newChild);
             j++;
+          } else if (oldKeyMap[newKey]) {
+            diffAndPatch(oldEl, oldEl.insertBefore(oldKeyMap[newKey][1], oldElements[j]), oldKeyMap[newKey][0], newChild);
+          } else {
+            diffAndPatch(oldEl, oldElements[j], null, newChild);
           }
           i++;
-        } else {
-          if (oldKeyCache[newKey]) {
-            // if this VNode has been stored before, apply it
-            oldEl.insertBefore(render(oldKeyCache[newKey]), render(oldChild));
-            i++;
-          } else if (oldKey === newKey) {
-            // if VNode has not changed, patch directly
-            diffAndPatch(oldEl, oldChildrenMap[oldKey][0], oldChild, newChild);
-            i++;
-            j++;
-          } else {
-            // go through oldChildren till we find the node with same key,
-            // if not, create it with newChild and insert
-            while (j < oldChildren.length) {
-              oldChild = oldChildren[j];
-              oldKey = oldChild.key;
-
-              if (oldKey === newKey) {
-                diffAndPatch(oldEl, oldChildrenMap[oldKey][0], oldChild, newChild);
-                i++;
-                j++;
-                break
-              } else {
-                oldKeyCache[oldKey] = oldChild;
-                oldChildren.splice(j, 1);
-                oldEl.removeChild(oldChildrenMap[oldKey][0]);
-              }
-            }
-          }
+          newKeyed.push(newKey);
         }
       }
+
+      while (j < oldChildren.length) {
+        if (utils.isUndefined(oldChildren[j].key)) {
+          removeElement(oldEl, oldElements[j], oldChildren[j]);
+        }
+        j++;
+      }
+
+      // remove all the old child els that have not been reused
+      for (var key in oldKeyMap) {
+        if (newKeyed.indexOf(+key) === -1) {
+          var child = oldKeyMap[key];
+          removeElement(oldEl, child[1], child[0]);
+        }
+      }
+    } else {
+      // 3. remove old el, create new one
+      var newEl = createElement(newNode);
+      parent.insertBefore(newEl, oldEl);
+      parent.removeChild(oldEl);
+      oldEl = newEl;
     }
 
     return oldEl
@@ -246,24 +288,31 @@ function app(view, actions, state, container) {
       for (var j = 0; j < props.length; j++) {
         prop = props[j];
         value = propsPatches[prop];
-        if (getType(value) === 'function') {
+        if (utils.getType(value) === 'function') {
           el[prop] = value;
-        } else if (value === false || isUndefined(value)) {
+        } else if (value === false || utils.isUndefined(value)) {
           el.removeAttribute(prop);
         } else {
           el.setAttribute(prop, value);
         }
       }
     }
+
+    var cb = isFisrtRender ? newProps.oncreate : newProps.onupdate;
+    if (cb) {
+      lifeCycleStack.push(function() {
+        cb(el, oldProps);
+      });
+    }
   }
 }
 
 var app_1 = app;
-var h_1 = h;
+var h_1$2 = h_1;
 
 var src = {
 	app: app_1,
-	h: h_1
+	h: h_1$2
 };
 
 var slimapp = src;
