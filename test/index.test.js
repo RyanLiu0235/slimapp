@@ -77,16 +77,15 @@ test('children reorder', () => {
     return h('ol', {}, state.list.map(item => h('li', { key: item.key }, [item.text])))
   }
   var actions = {
-    add: function(payload) {
-      return function(state) {
-        state.list.push(payload)
-      }
+    add: payload => state => {
+      state.list.push(payload)
     },
-    del: function(key) {
-      return function(state) {
-        var index = state.list.findIndex(item => item.key === key)
-        state.list.splice(index, 1)
-      }
+    del: key => state => {
+      var index = state.list.findIndex(item => item.key === key)
+      state.list.splice(index, 1)
+    },
+    replace: list => state => {
+      state.list = list
     }
   }
   var state = {
@@ -99,16 +98,50 @@ test('children reorder', () => {
     }]
   }
   var vm = app(view, actions, state, document.body)
+
+  // add one at tail
   vm.add({
     key: 3,
     text: '3'
   })
-  vm.del(2)
-
   expect(document.body.innerHTML).toBe(
     '<ol>' +
     '<li>1</li>' +
+    '<li>2</li>' +
     '<li>3</li>' +
+    '</ol>'
+  )
+
+  // replace
+  vm.replace([{
+    key: 2,
+    text: '2'
+  }, {
+    key: 4,
+    text: '4'
+  }, {
+    key: 3,
+    text: '3'
+  }, {
+    key: 1,
+    text: '1'
+  }])
+  expect(document.body.innerHTML).toBe(
+    '<ol>' +
+    '<li>2</li>' +
+    '<li>4</li>' +
+    '<li>3</li>' +
+    '<li>1</li>' +
+    '</ol>'
+  )
+
+  // remove last one
+  vm.del(3)
+  expect(document.body.innerHTML).toBe(
+    '<ol>' +
+    '<li>2</li>' +
+    '<li>4</li>' +
+    '<li>1</li>' +
     '</ol>'
   )
 })

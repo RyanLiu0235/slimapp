@@ -112,99 +112,83 @@ function app(view, actions, state, container) {
   function diffAndPatch(parent, oldEl, oldNode, newNode) {
     if (oldNode === null) {
       // 1. brand new node
-      oldEl = parent.appendChild(createElement(newNode))
-    } else if (
-      _.isString(oldNode) && _.isString(newNode) &&
-      oldNode !== newNode
-    ) {
+      oldEl = parent.insertBefore(createElement(newNode), oldEl)
+    } else if (_.isString(oldNode) && _.isString(newNode)) {
       // 2. both text node and changed
-      parent.textContent = newNode
+      if (oldNode !== newNode) {
+        parent.textContent = newNode
+      }
     } else if (
       oldNode.tagName &&
-      oldNode.tagName === newNode.tagName &&
-      oldNode.key === newNode.key
+      oldNode.tagName === newNode.tagName
     ) {
       // 3. tag remains still, we'll check if attrs and children have been changed
-      // check attrs
+      // 3.1. check attrs
       updateAttrs(oldEl, oldNode.props, newNode.props)
 
-      // check children
+      // 3.2. check children
       var oldChildren = oldNode.children
       var newChildren = newNode.children
 
-      // store all the old keys
-      var oldChildrenMap = []
-      var key
+      var oldElements = []
+      var oldKeyMap = {}
+      var newKeyed = []
       for (var m = 0; m < oldChildren.length; m++) {
-        key = oldChildren[m].key
+        oldElements.push(oldEl.childNodes[m])
+        var key = oldChildren[m].key
         if (!_.isUndefined(key)) {
-          oldChildrenMap[key] = [oldEl.childNodes[m], oldChildren[m]]
+          oldKeyMap[key] = [oldChildren[m], oldEl.childNodes[m]]
         }
       }
 
-      // go through newChildren
-      var i = 0 // cursor for newNode
-      var j = 0 // cursor for oldNode
-      var oldKeyCache = []
-      var oldChild, newChild, oldKey, newKey
+      var i = 0 // i is the cursor when iterate newChildren
+      var j = 0 // j is the cursor when iterate oldChildren
       while (i < newChildren.length) {
-        newChild = newChildren[i]
-        oldChild = oldChildren[j]
+        var oldChild = oldChildren[j]
+        var newChild = newChildren[i]
 
         if (_.isUndefined(oldChild)) {
-          oldEl.insertBefore(createElement(newChild), null)
+          diffAndPatch(oldEl, null, null, newChild)
           i++
           continue
         }
 
-        newKey = newChild.key
-        oldKey = oldChild.key
+        var oldKey = oldChild.key
+        var newKey = newChild.key
 
-        if (_.isUndefined(newKey)) {
-          if (_.isUndefined(oldKey)) {
-            diffAndPatch(oldEl, oldEl.childNodes[i], oldChild, newChild)
+        if (_.isUndefined(oldKey)) {
+          if (_.isUndefined(newKey)) {
+            diffAndPatch(oldEl, oldEl.childNodes[j], oldChild, newChild)
+            i++
+          }
+          j++
+        } else {
+          if (oldKey === newKey) {
+            diffAndPatch(oldEl, oldEl.childNodes[j], oldChild, newChild)
             j++
+          } else if (oldKeyMap[newKey]) {
+            diffAndPatch(oldEl, oldEl.insertBefore(oldKeyMap[newKey][1], oldElements[j]), oldKeyMap[newKey][0], newChild)
+          } else {
+            diffAndPatch(oldEl, oldElements[j], null, newChild)
           }
           i++
-        } else {
-          var index = oldKeyCache.indexOf(newKey)
-          if (index > -1) {
-            // if this VNode has been stored before, apply it
-            oldEl.insertBefore(createElement(oldChildrenMap[newKey][0]), createElement(oldChild))
-            oldKeyCache.splice(index, 1)
-            i++
-          } else if (oldKey === newKey) {
-            // if VNode has not changed, patch directly
-            diffAndPatch(oldEl, oldChildrenMap[oldKey][0], oldChild, newChild)
-            i++
-            j++
-          } else {
-            // go through oldChildren till we find the node with same key,
-            // if not, create it with newChild and insert
-            while (j < oldChildren.length) {
-              oldChild = oldChildren[j]
-              oldKey = oldChild.key
-
-              if (oldKey === newKey) {
-                diffAndPatch(oldEl, oldChildrenMap[oldKey][0], oldChild, newChild)
-                i++
-                j++
-                break
-              } else {
-                oldKeyCache.push(oldKey)
-                oldChildren.splice(j, 1)
-              }
-            }
-          }
+          newKeyed.push(newKey)
         }
       }
 
-      // remove all the els that have not been reused
-      var m = 0
-      while (m < oldKeyCache.length) {
-        var child = oldChildrenMap[oldKeyCache[m]]
-        removeElement(oldEl, child[0], child[1])
-        m++
+      while (j < oldChildren.length) {
+        if (_.isUndefined(oldChildren[j].key)) {
+          removeElement(oldEl, oldElements[j], oldChildren[j])
+        }
+        j++
+      }
+
+      // remove all the old child els that have not been reused
+      for (var key in oldKeyMap) {
+        if (newKeyed.indexOf(+key) === -1) {
+          var child = oldKeyMap[key]
+          removeElement(oldEl, child[1], child[0])
+        }
       }
     } else {
       // 3. remove old el, create new one

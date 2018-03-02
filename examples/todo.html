@@ -43,10 +43,8 @@
       h('ol', {
           'data-num': state.list.length,
           onupdate: function(e, attrs) {
-            console.log('before update: ', attrs['data-num'])
-            console.log('after update: ', state.list.length)
             if (attrs['data-num'] !== state.list.length) {
-              console.log('data-num of ol has been updated!')
+              console.log('ol has been updated!')
             }
           }
         },
@@ -77,8 +75,10 @@
     },
     del: function(id) {
       return function(state) {
+        console.log('del: ', id)
         var index = state.list.findIndex(item => item.id === id)
         state.list.splice(index, 1)
+        console.log('state: ', state)
       }
     }
   }
