@@ -123,6 +123,9 @@ test('children reorder', () => {
     key: 3,
     text: '3'
   }, {
+    key: undefined,
+    text: 'undefined'
+  }, {
     key: 1,
     text: '1'
   }])
@@ -131,17 +134,29 @@ test('children reorder', () => {
     '<li>2</li>' +
     '<li>4</li>' +
     '<li>3</li>' +
+    '<li>undefined</li>' +
+    '<li>1</li>' +
+    '</ol>'
+  )
+
+  // remove first one
+  vm.del(2)
+  expect(document.body.innerHTML).toBe(
+    '<ol>' +
+    '<li>4</li>' +
+    '<li>3</li>' +
+    '<li>undefined</li>' +
     '<li>1</li>' +
     '</ol>'
   )
 
   // remove last one
-  vm.del(3)
+  vm.del(1)
   expect(document.body.innerHTML).toBe(
     '<ol>' +
-    '<li>2</li>' +
     '<li>4</li>' +
-    '<li>1</li>' +
+    '<li>3</li>' +
+    '<li>undefined</li>' +
     '</ol>'
   )
 })
